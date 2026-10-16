@@ -15,42 +15,17 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
 
-      - name: Install Bubblewrap CLI (PWA to APK Converter)
-        run: npm install -g @bubblewrap/cli
+      - name: Build Web App to APK
+        uses: darkshredder/website-to-apk-action@v1.4
+        with:
+          build-folder-path: '.'
+          app-name: 'Kalpataru Blood'
+          output-folder-path: 'output-apk'
 
-      - name: Create Web Manifest for WebView
-        run: |
-          cat << 'EOM' > manifest.json
-          {
-            "name": "Kalpataru Blood Donors",
-            "short_name": "Kalpataru",
-            "start_url": "https://kalpataru.pages.dev",
-            "display": "standalone",
-            "background_color": "#dc2626",
-            "theme_color": "#dc2626"
-          }
-          EOM
-
-      - name: Build Android Package via WebAPK Generator
-        run: |
-          npx pwabuilder-android-generator --manifest manifest.json --output ./android-app || true
-
-      - name: Fallback Direct WebView Gradle Build
-        if: always()
-        run: |
-          if [ -d "android-app" ] && [ -f "android-app/gradlew" ]; then
-            cd android-app
-            chmod +x gradlew
-            ./gradlew assembleDebug
-          fi
-
-      - name: Find and Upload APK Artifact
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kalpataru-App-Debug
-          path: |
-            *.apk
-            android-app/**/*.apk
-            **/build/outputs/apk/debug/*.apk
+          path: output-apk/*.apk
