@@ -1,0 +1,50 @@
+name: Build Kalpataru APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Native Wrapper (Cordova / Bubblewrap / Webview CLI)
+        run: npm install -g html-to-android-wrapper || true
+
+      - name: Generate Android Project Wrapper
+        run: |
+          mkdir -p android-app
+          cp index.html android-app/index.html || true
+
+      - name: Build Debug APK via WebView Template
+        uses: classplus/action-webview-apk@v1.1.0
+        with:
+          url: "https://kalpataru.pages.dev"
+          app_name: "Kalpataru Blood"
+          package_name: "com.kalpataru.humanitarian"
+      
+      - name: Fallback Standard Gradle Build (If Android App structure exists)
+        if: always()
+        run: |
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug
+          fi
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kalpataru-App-Debug
+          path: |
+            *.apk
+            app/build/outputs/apk/debug/*.apk
+            **/build/outputs/apk/debug/*.apk
