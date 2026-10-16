@@ -18,74 +18,152 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Cordova & Create App
+      - name: Generate Pure Native Android WebView Project & Build APK
         run: |
-          npm install -g cordova
-          cordova create myapp com.kalpataru.humanitarian "Kalpataru Blood"
-          cd myapp
+          mkdir -p android-project/app/src/main/java/com/kalpataru/humanitarian
+          mkdir -p android-project/app/src/main/assets
 
-          # If index.html is in the repo, use it; otherwise load the live Cloudflare app
-          if [ -f "../index.html" ]; then
-            cp ../index.html www/index.html
-          else
-            cat << 'HTML' > www/index.html
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <title>Kalpataru Blood Donor Portal</title>
-            <style>
-              body, html { margin:0; padding:0; height:100%; background:#4c0519; color:#fff; font-family:sans-serif; display:flex; align-items:center; justify-content:center; text-align:center; }
-            </style>
-            <script>
-              window.location.replace("https://kalpataru.kalpatarutest.workers.dev");
-            </script>
-          </head>
-          <body>
-            <div>
-              <h2>🩸 Kalpataru Humanitarian Initiative</h2>
-              <p>Loading Blood Donor Portal...</p>
-            </div>
-          </body>
-          </html>
-          HTML
+          # Copy index.html if present in repo, otherwise load live Cloudflare site
+          if [ -f "index.html" ]; then
+            cp index.html android-project/app/src/main/assets/index.html
           fi
 
-          # Allow Internet, Supabase, WhatsApp, and Phone Call permissions
-          cat << 'XML' > config.xml
-          <?xml version='1.0' encoding='utf-8'?>
-          <widget id="com.kalpataru.humanitarian" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-              <name>Kalpataru Blood</name>
-              <description>Kalpataru Humanitarian Initiative Blood Donor Portal</description>
-              <author email="info@kalpataru.org" href="https://kalpataru.kalpatarutest.workers.dev">Kalpataru NGO</author>
-              <content src="index.html" />
-              <access origin="*" />
-              <allow-navigation href="*" />
-              <allow-intent href="http://*/*" />
-              <allow-intent href="https://*/*" />
-              <allow-intent href="tel:*" />
-              <allow-intent href="sms:*" />
-              <allow-intent href="mailto:*" />
-              <allow-intent href="geo:*" />
-              <allow-intent href="whatsapp:*" />
-              <preference name="CleartextTrafficPermitted" value="true" />
-          </widget>
-          XML
+          cat << 'SETTINGS' > android-project/settings.gradle
+          rootProject.name = "KalpataruBlood"
+          include ':app'
+          SETTINGS
 
-          cordova platform add android@12.0.1
-          cordova build android --debug
+          cat << 'ROOTGRADLE' > android-project/build.gradle
+          buildscript {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+              dependencies {
+                  classpath 'com.android.tools.build:gradle:8.2.2'
+              }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          ROOTGRADLE
+
+          cat << 'PROPS' > android-project/gradle.properties
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          PROPS
+
+          cat << 'APPGRADLE' > android-project/app/build.gradle
+          apply plugin: 'com.android.application'
+
+          android {
+              namespace 'com.kalpataru.humanitarian'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.kalpataru.humanitarian"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          APPGRADLE
+
+          cat << 'MANIFEST' > android-project/app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+              <application
+                  android:label="Kalpataru Blood"
+                  android:usesCleartextTraffic="true"
+                  android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true"
+                      android:configChanges="orientation|screenSize|keyboardHidden">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          MANIFEST
+
+          cat << 'JAVA' > android-project/app/src/main/java/com/kalpataru/humanitarian/MainActivity.java
+          package com.kalpataru.humanitarian;
+
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          public class MainActivity extends Activity {
+              private WebView webView;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  webView = new WebView(this);
+                  setContentView(webView);
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setAllowFileAccess(true);
+                  settings.setDatabaseEnabled(true);
+
+                  webView.setWebChromeClient(new WebChromeClient());
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                          String url = request.getUrl().toString();
+                          if (url.startsWith("tel:") || url.startsWith("whatsapp:") || url.contains("wa.me")) {
+                              try {
+                                  Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                  startActivity(intent);
+                              } catch (Exception ignored) {}
+                              return true;
+                          }
+                          return false;
+                      }
+                  });
+
+                  webView.loadUrl("https://kalpataru.kalpatarutest.workers.dev");
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (webView != null && webView.canGoBack()) {
+                      webView.goBack();
+                  } else {
+                      super.onBackPressed();
+                  }
+              }
+          }
+          JAVA
+
+          cd android-project
+          gradle assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kalpataru-Blood-APK
-          path: myapp/platforms/android/app/build/outputs/apk/debug/*.apk
+          path: android-project/app/build/outputs/apk/debug/*.apk
