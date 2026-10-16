@@ -12,20 +12,36 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Build Web App to APK
-        uses: darkshredder/website-to-apk-action@v1.4
-        with:
-          build-folder-path: '.'
-          app-name: 'Kalpataru Blood'
-          output-folder-path: 'output-apk'
+      - name: Install Native Android Wrapper CLI
+        run: |
+          npm install -g cordova
+
+      - name: Create Cordova Project Wrapper
+        run: |
+          cordova create myapp com.kalpataru.humanitarian KalpataruBlood
+          cd myapp
+          # Replace default www index with our Kalpataru index.html
+          cp ../index.html www/index.html
+          cordova platform add android
+
+      - name: Build APK via Cordova Gradle
+        run: |
+          cd myapp
+          cordova build android --debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kalpataru-App-Debug
-          path: output-apk/*.apk
+          path: myapp/platforms/android/app/build/outputs/apk/debug/*.apk
