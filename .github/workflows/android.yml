@@ -145,7 +145,7 @@ jobs:
                       }
                   });
 
-                  webView.loadUrl("https://kalpataru.kalpatarutest.workers.dev");
+                  webView.loadUrl("https://kalpatarutest.pages.dev/");
               }
 
               @Override
