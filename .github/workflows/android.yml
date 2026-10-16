@@ -17,34 +17,40 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Native Wrapper (Cordova / Bubblewrap / Webview CLI)
-        run: npm install -g html-to-android-wrapper || true
+      - name: Install Bubblewrap CLI (PWA to APK Converter)
+        run: npm install -g @bubblewrap/cli
 
-      - name: Generate Android Project Wrapper
+      - name: Create Web Manifest for WebView
         run: |
-          mkdir -p android-app
-          cp index.html android-app/index.html || true
+          cat << 'EOM' > manifest.json
+          {
+            "name": "Kalpataru Blood Donors",
+            "short_name": "Kalpataru",
+            "start_url": "https://kalpataru.pages.dev",
+            "display": "standalone",
+            "background_color": "#dc2626",
+            "theme_color": "#dc2626"
+          }
+          EOM
 
-      - name: Build Debug APK via WebView Template
-        uses: classplus/action-webview-apk@v1.1.0
-        with:
-          url: "https://kalpataru.pages.dev"
-          app_name: "Kalpataru Blood"
-          package_name: "com.kalpataru.humanitarian"
-      
-      - name: Fallback Standard Gradle Build (If Android App structure exists)
+      - name: Build Android Package via WebAPK Generator
+        run: |
+          npx pwabuilder-android-generator --manifest manifest.json --output ./android-app || true
+
+      - name: Fallback Direct WebView Gradle Build
         if: always()
         run: |
-          if [ -f "gradlew" ]; then
+          if [ -d "android-app" ] && [ -f "android-app/gradlew" ]; then
+            cd android-app
             chmod +x gradlew
             ./gradlew assembleDebug
           fi
 
-      - name: Upload APK Artifact
+      - name: Find and Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Kalpataru-App-Debug
           path: |
             *.apk
-            app/build/outputs/apk/debug/*.apk
+            android-app/**/*.apk
             **/build/outputs/apk/debug/*.apk
