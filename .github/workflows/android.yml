@@ -18,32 +18,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Generate Native Android WebView Project with Custom App Icon & Build APK
+      - name: Generate Native Android Project & Build APK
         run: |
           mkdir -p android-project/app/src/main/java/com/kalpataru/humanitarian
           mkdir -p android-project/app/src/main/res/drawable
           mkdir -p android-project/app/src/main/res/mipmap-anydpi-v26
 
           cat << 'SETTINGS' > android-project/settings.gradle
-          rootProject.name = "KalpataruBlood"
+          rootProject.name = "Kalpataru"
           include ':app'
           SETTINGS
 
           cat << 'ROOTGRADLE' > android-project/build.gradle
           buildscript {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-              dependencies {
-                  classpath 'com.android.tools.build:gradle:8.2.2'
-              }
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
           }
           allprojects {
-              repositories {
-                  google()
-                  mavenCentral()
-              }
+              repositories { google(); mavenCentral() }
           }
           ROOTGRADLE
 
@@ -54,19 +46,16 @@ jobs:
 
           cat << 'APPGRADLE' > android-project/app/build.gradle
           apply plugin: 'com.android.application'
-
           android {
               namespace 'com.kalpataru.humanitarian'
               compileSdk 34
-
               defaultConfig {
                   applicationId "com.kalpataru.humanitarian"
                   minSdk 24
                   targetSdk 34
-                  versionCode 2
-                  versionName "1.1"
+                  versionCode 3
+                  versionName "1.2"
               }
-
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_17
                   targetCompatibility JavaVersion.VERSION_17
@@ -74,72 +63,33 @@ jobs:
           }
           APPGRADLE
 
-          # 1. Custom Icon Background (Deep Ruby Crimson with Subtle Inner Ring)
+          # App Icon Background (Deep Ruby Crimson)
           cat << 'ICON_BG' > android-project/app/src/main/res/drawable/ic_launcher_background.xml
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
-              <path
-                  android:fillColor="#9F1239"
-                  android:pathData="M0,0h108v108h-108z" />
-              <path
-                  android:fillColor="#E11D48"
-                  android:pathData="M54,54m-46,0a46,46 0,1 1,92 0a46,46 0,1 1,-92 0" />
-              <path
-                  android:fillColor="#BE123C"
-                  android:pathData="M54,54m-38,0a38,38 0,1 1,76 0a38,38 0,1 1,-76 0" />
+              android:width="108dp" android:height="108dp" viewportWidth="108" viewportHeight="108">
+              <path android:fillColor="#881337" android:pathData="M0,0h108v108h-108z" />
+              <path android:fillColor="#E11D48" android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
+              <path android:fillColor="#BE123C" android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
           </vector>
           ICON_BG
 
-          # 2. Custom Icon Foreground (Pure White Blood Drop + Humanitarian Medical Cross)
+          # App Icon Foreground (Blood Drop + Kalpataru K Emblem)
           cat << 'ICON_FG' > android-project/app/src/main/res/drawable/ic_launcher_foreground.xml
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
-              <!-- Outer Golden/Soft Glow Ring -->
-              <path
-                  android:strokeColor="#FECDD3"
-                  android:strokeWidth="1.8"
-                  android:fillColor="#00000000"
-                  android:pathData="M54,54m-34,0a34,34 0,1 1,68 0a34,34 0,1 1,-68 0" />
-              <!-- White Blood Droplet -->
-              <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M54,24 C54,24 33,49 33,64 C33,75.6 42.4,85 54,85 C65.6,85 75,75.6 75,64 C75,49 54,24 54,24 Z" />
-              <!-- Ruby Medical Cross Inside the Blood Drop -->
-              <path
-                  android:fillColor="#E11D48"
-                  android:pathData="M51,54 H57 V61 H64 V67 H57 V74 H51 V67 H44 V61 H51 Z" />
+              android:width="108dp" android:height="108dp" viewportWidth="108" viewportHeight="108">
+              <path android:strokeColor="#FECDD3" android:strokeWidth="2" android:fillColor="#00000000"
+                  android:pathData="M54,54m-35,0a35,35 0,1 1,70 0a35,35 0,1 1,-70 0" />
+              <!-- Blood Droplet -->
+              <path android:fillColor="#FFFFFF"
+                  android:pathData="M54,22 C54,22 31,48 31,65 C31,77.7 41.3,88 54,88 C66.7,88 77,77.7 77,65 C77,48 54,22 54,22 Z" />
+              <!-- Medical Cross in Droplet -->
+              <path android:fillColor="#E11D48"
+                  android:pathData="M51,52 H57 V60 H65 V66 H57 V74 H51 V66 H43 V60 H51 Z" />
           </vector>
           ICON_FG
 
-          # 3. Single-File Fallback Vector Icon for Older Android Launchers
-          cat << 'ICON_FALLBACK' > android-project/app/src/main/res/drawable/ic_launcher_legacy.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
-              <path
-                  android:fillColor="#E11D48"
-                  android:pathData="M18,0 L90,0 A18,18 0 0,1 108,18 L108,90 A18,18 0 0,1 90,108 L18,108 A18,18 0 0,1 0,90 L0,18 A18,18 0 0,1 18,0 Z" />
-              <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M54,20 C54,20 30,48 30,65 C30,78.2 40.8,89 54,89 C67.2,89 78,78.2 78,65 C78,48 54,20 54,20 Z" />
-              <path
-                  android:fillColor="#E11D48"
-                  android:pathData="M50.5,54 H57.5 V61.5 H65 V68.5 H57.5 V76 H50.5 V68.5 H43 V61.5 H50.5 Z" />
-          </vector>
-          ICON_FALLBACK
-
-          # 4. Adaptive Icon Wrapper (Android 8.0+)
           cat << 'ADAPTIVE' > android-project/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
           <?xml version="1.0" encoding="utf-8"?>
           <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
@@ -148,15 +98,13 @@ jobs:
           </adaptive-icon>
           ADAPTIVE
 
-          # 5. AndroidManifest with Custom Icon & Round Icon
           cat << 'MANIFEST' > android-project/app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
               <application
-                  android:label="Kalpataru Blood"
+                  android:label="Kalpataru"
                   android:icon="@mipmap/ic_launcher"
                   android:roundIcon="@mipmap/ic_launcher"
                   android:usesCleartextTraffic="true"
@@ -174,16 +122,20 @@ jobs:
           </manifest>
           MANIFEST
 
-          # 6. MainActivity pointing to https://kalpatarutest.pages.dev/
           cat << 'JAVA' > android-project/app/src/main/java/com/kalpataru/humanitarian/MainActivity.java
           package com.kalpataru.humanitarian;
 
           import android.app.Activity;
+          import android.content.Context;
           import android.content.Intent;
           import android.graphics.Color;
           import android.net.Uri;
           import android.os.Bundle;
+          import android.print.PrintAttributes;
+          import android.print.PrintDocumentAdapter;
+          import android.print.PrintManager;
           import android.view.Window;
+          import android.webkit.JavascriptInterface;
           import android.webkit.WebChromeClient;
           import android.webkit.WebResourceRequest;
           import android.webkit.WebSettings;
@@ -192,6 +144,22 @@ jobs:
 
           public class MainActivity extends Activity {
               private WebView webView;
+
+              public class AndroidPrintBridge {
+                  @JavascriptInterface
+                  public void printDocument(final String title) {
+                      runOnUiThread(new Runnable() {
+                          @Override
+                          public void run() {
+                              PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+                              if (printManager != null && webView != null) {
+                                  PrintDocumentAdapter printAdapter = webView.createPrintDocumentAdapter(title != null ? title : "Kalpataru_Card");
+                                  printManager.print(title != null ? title : "Kalpataru_Card", printAdapter, new PrintAttributes.Builder().build());
+                              }
+                          }
+                      });
+                  }
+              }
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -208,6 +176,9 @@ jobs:
                   settings.setDomStorageEnabled(true);
                   settings.setAllowFileAccess(true);
                   settings.setDatabaseEnabled(true);
+
+                  // Native Print Interface for Android App
+                  webView.addJavascriptInterface(new AndroidPrintBridge(), "AndroidPrint");
 
                   webView.setWebChromeClient(new WebChromeClient());
                   webView.setWebViewClient(new WebViewClient() {
@@ -245,5 +216,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Kalpataru-Blood-APK
+          name: Kalpataru-App
           path: android-project/app/build/outputs/apk/debug/*.apk
